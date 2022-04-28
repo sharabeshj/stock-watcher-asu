@@ -9,7 +9,7 @@ import {StockData} from '../Types/AddStockTypes';
 export enum StockActionTypes {
     ADD_STOCK = 'ADD_STOCK',
     CLEAR_STOCK = 'CLEAR_STOCK'
-}
+ }
 
 type Payload = {
     [StockActionTypes.ADD_STOCK]: {
@@ -21,7 +21,7 @@ type Payload = {
 export type StockActions = ActionMap<Payload>[keyof ActionMap<Payload>];
 
 export const stockState: StockStoreType = {
-    stocks: []
+    stocks: [],
 }
 
 export const StockReducer = (state: StockStoreType = stockState, action: StockActions): StockStoreType => {

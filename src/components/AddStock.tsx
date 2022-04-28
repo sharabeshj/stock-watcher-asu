@@ -24,7 +24,7 @@ class AddStocksApi extends Api {
     }
 }
 
-const AddStock: FunctionComponent<StockReducerProps> = ({ add_stock, clear_stock }) => {
+const AddStock: FunctionComponent<StockReducerProps> = ({ add_stock, clear_stock, stocks }) => {
     const initSaveData = {
         currency: "",
         description: "",
@@ -73,19 +73,19 @@ const AddStock: FunctionComponent<StockReducerProps> = ({ add_stock, clear_stock
     }
 
     return (
-        <Item>
+        <Item elevation={4}>
             <form noValidate autoComplete='off'>
                 <Grid container justifyContent={"center"} alignItems={'center'} spacing={2}>
                     <Grid item md={8} xs={12}>
                             <Autocomplete
-                                    fullWidth
-                                    disablePortal
-                                    id="searchSymbol"
-                                    open={open}
-                                    onOpen={() => setOpen(true)}
-                                    onClose={() => setOpen(false)}
-                                    isOptionEqualToValue={(option,value) => option.symbol === value.symbol}
-                                    renderInput={(params) => (
+                                fullWidth
+                                disablePortal
+                                id="searchSymbol"
+                                open={open}
+                                onOpen={() => setOpen(true)}
+                                onClose={() => setOpen(false)}
+                                isOptionEqualToValue={(option,value) => option.symbol === value.symbol}
+                                renderInput={(params) => (
                                         <TextField 
                                             label={"Stock"} 
                                             placeholder={"Search Stock"} 
@@ -107,12 +107,13 @@ const AddStock: FunctionComponent<StockReducerProps> = ({ add_stock, clear_stock
                                     filterOptions={createFilterOptions({ limit: 1000 })}
                                     onChange={(e, value) => { if (value) setSaveData(value) }}
                                     value={saveData}
+                                    getOptionDisabled = {(option) => (stocks.findIndex(f => f.symbol === option.symbol) === -1 ? false : true )}
                                 />
                         </Grid>
                         <Grid item xs={4}>
                             <Stack direction={"row"} spacing={2}>
                                 <Button variant="contained" onClick={() => handleSubmit()}>Add to Watchlist</Button>
-                                <Button variant='outlined' onClick={() => clear_stock() }>Clear All</Button>
+                                <Button variant='outlined' onClick={() => { clear_stock(); } }>Clear All</Button>
                             </Stack>
                         </Grid>
                 </Grid>

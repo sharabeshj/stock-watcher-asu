@@ -1,136 +1,121 @@
-import React, {Component} from 'react';
+import {FunctionComponent, useEffect, useState} from 'react';
 import {
     ResponsiveContainer,
     XAxis,
     YAxis,
-    ScatterChart,
-    Scatter,
+    LineChart,
+    CartesianGrid,
+    Tooltip,
+    Line,
   } from "recharts";
 import moment from 'moment';
-import { Typography } from '@mui/material';
 import { AxiosRequestConfig } from 'axios';
 
-import { PriceData } from '../Types/StockTypes';
-import { WatcherConnector, WatcherReducerProps } from '../Reducers/WatcherReducer';
+import { CandleData } from '../Types/StockTypes';
+import {  WatcherConnector, WatcherReducerProps } from '../Reducers/WatcherReducer';
 import { Api } from '../utils/api';
 import { apiConfig } from '../utils/api.config';
 
-  
-const formatter = (value: string) => `$${value}`;
 
 class StockWatcherApi extends Api {
     public constructor(config: AxiosRequestConfig) {
         super(config);
-        this.getQuote.bind(this);
+        this.getCandles.bind(this);
     }
     
-    public getQuote(): Promise<any> {
-        return this.get<any>('/quote');
-    }
-
     public getCandles(): Promise<any> {
         return this.get<any>('/stock/candle');
     }
 }
 
-type StockWatcherState = { priceData: PriceData[], currentPrice: number, socket: WebSocket | null }
+const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, expanded: string | false }> = ({ symbol, expanded }) => {
+    const [candleData, setCandleData] = useState<CandleData[]>([]);
+    const [timer, setTimer] = useState<NodeJS.Timer | null>(null);
 
-class StockWatcher extends Component<WatcherReducerProps & { symbol: string }, StockWatcherState> {
-    
-    count = 0;
-    state: StockWatcherState = {
-        priceData: [],
-        currentPrice: 0,
-        socket: null
-    }
-
-    stockWatcherApi = new StockWatcherApi({
-        ...apiConfig,
-        params: {
-            ...apiConfig.params,
-            symbol: this.props.symbol,
-            resolution: 'D',
-            from: 1648365439,
-            to:1651043839
+    useEffect(() => {
+        return () => {
+            if(timer) clearInterval(timer);
         }
-    });
+    })
 
-    componentDidMount(){
-        if(this.count === 0){
-            const socket = new WebSocket('wss://ws.finnhub.io?token=c9kcp3qad3i81ufrsg9g')
-            // Connection opened -> Subscribe
-            socket.addEventListener('open', (event) => {
-                socket?.send(JSON.stringify({'type':'subscribe', 'symbol': this.props.symbol}))
-            });
-
-            // Listen for messages
-            socket.addEventListener('message', (event) => {
-                console.log(event.data);
-                // setPriceData(event.data.map(d => d.data)));
-            });
-
-            socket.addEventListener('close', (event) => {
-                console.log('closed');    
-            });
-            this.stockWatcherApi.getQuote()
-                    .then(d => {
-                        this.setState({ currentPrice: d['c']});
-                    });
-            this.stockWatcherApi.getCandles()
-                .then(d => {
-                    let data: any[] = [], c = d['c'], t = d['t'];
-                    c.forEach((ele: number, i: number)=>{
-                        data.push({ c: ele, t: t[i]});
-                    })
-                    this.setState({
-                        priceData: data
-                    });
-                    console.log(this.state.priceData);
-                })
+    useEffect(() => {
+        if(expanded === symbol) {
+            const getCandles = () => {
+                const stockWatcherApi = new StockWatcherApi({
+                    ...apiConfig,
+                    params: {
+                        ...apiConfig.params,
+                        symbol: symbol,
+                        resolution: 'D',
+                        from: moment().subtract(3, 'months').unix(),
+                        to:moment().unix()
+                    }
+                });
+                stockWatcherApi.getCandles()
+                        .then(d => {
+                            if(d['s'] === 'ok'){
+                                let data: any[] = [], c = d['c'], t = d['t'];
+                            c.forEach((ele: number, i: number)=>{
+                                data.push({ c: ele, t: t[i]});
+                            })
+                            setCandleData(data);
+                            }                    
+                        });
+            }
+            getCandles();
+            const timer = setInterval(() => {
+                getCandles();
+            }, 5000);
+            setTimer(timer);
         }
-    }
-    
+    }, [symbol, expanded]);
 
-    componentWillUnmount() {
-        if(this.state.socket?.readyState === 1) {
-            this.state.socket?.send(JSON.stringify({'type':'unsubscribe','symbol': this.props.symbol}));
-            this.state.socket?.close();
+    useEffect(() => {
+        if(expanded !== symbol) {
+            if(timer) {
+                clearInterval(timer);
+            }
+        }
+    }, [expanded, symbol, timer]);
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+          return (
+            <div className="custom-tooltip">
+              <p className="label">{`${moment.unix(label).format('MM/DD/YYYY')} : $${payload[0].value}`}</p>
+            </div>
+          );
+        } else {
+            return (<p></p>)
         }
     }
 
-    
-    render(): React.ReactNode {
-        const chart = (
-            <ResponsiveContainer width = '95%' height = {500} >
-                <ScatterChart>
-                <XAxis
-                    dataKey = 't'
-                    domain = {['auto', 'auto']}
-                    name = 'Time'
-                    tickFormatter = {(t) => moment.unix(t).format('MM/DD/YYYY')}
-                    type = 'number'
-                />
-                <YAxis dataKey = 'c' name = 'Value' />
+    const chart = (
+        <ResponsiveContainer width = '95%' minWidth={'500px'} height = {500} >
+            <LineChart
+            data={candleData}
+            margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+            }}
+            >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+                dataKey = 't'
+                domain = {['auto', 'auto']}
+                name = 'Time'
+                tickFormatter = {(t) => moment.unix(t).format('MM/DD/YYYY')}
+                type = 'number'
+            />
+            <YAxis name = 'Value' tickFormatter={t => `$${t}`}/>
+            <Tooltip content={<CustomTooltip />}/>
+            <Line type="monotone" dataKey="c" stroke="#8884d8" />
+            </LineChart>
+        </ResponsiveContainer>);
 
-                <Scatter
-                    data = {this.state.priceData}
-                    line = {{ stroke: '#eee' }}
-                    lineJointType = 'monotoneX'
-                    lineType = 'joint'
-                    name = 'Values'
-                />
-
-                </ScatterChart>
-                </ResponsiveContainer>);
-        return (
-            <div>
-                <Typography variant="h4" gutterBottom component="div">
-                    {formatter(this.state.currentPrice.toString())}            
-                </Typography>
-                { this.state.priceData.length > 0 ? chart : null }
-            </div>)
-    }
-    
+    return (chart)
 }
 
 export default WatcherConnector(StockWatcher);
