@@ -72,6 +72,13 @@ const AddStock: FunctionComponent<StockReducerProps> = ({ add_stock, clear_stock
         setSaveData(initSaveData);
     }
 
+    const clearAllIntervals = () => {
+        const interval_id = window.setInterval(() => {}, Number.MAX_SAFE_INTEGER);
+        for (let i = 1; i < interval_id; i++) {
+            window.clearInterval(i);
+        }
+    }
+
     return (
         <Item elevation={4}>
             <form noValidate autoComplete='off'>
@@ -113,7 +120,7 @@ const AddStock: FunctionComponent<StockReducerProps> = ({ add_stock, clear_stock
                         <Grid item xs={4}>
                             <Stack direction={"row"} spacing={2}>
                                 <Button variant="contained" onClick={() => handleSubmit()}>Add to Watchlist</Button>
-                                <Button variant='outlined' onClick={() => { clear_stock(); } }>Clear All</Button>
+                                <Button variant='outlined' onClick={() => { clear_stock(); clearAllIntervals()} }>Clear All</Button>
                             </Stack>
                         </Grid>
                 </Grid>

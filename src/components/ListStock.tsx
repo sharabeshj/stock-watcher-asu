@@ -1,4 +1,4 @@
-import { Accordion, AccordionDetails, AccordionSummary, Divider, Box, Typography, Stack, Grid } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Divider, Box, Typography, Grid } from '@mui/material';
 import {FunctionComponent, SyntheticEvent, useEffect, useState} from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { AxiosRequestConfig } from 'axios';
@@ -37,15 +37,6 @@ const StockListItem: FunctionComponent<{ stock: StockData, expanded: string | fa
     //     if(expanded === stock.symbol)
     //         setCurPrice(data['data'][0]['p']);
     // });
-
-    useEffect(() => {
-        // Get a reference to the last interval + 1
-        const interval_id = window.setInterval(function(){}, Number.MAX_SAFE_INTEGER);
-        // Clear any timeout/interval up to that id
-        for (let i = 1; i < interval_id; i++) {
-        window.clearInterval(i);
-        }
-    },[]);
 
     useEffect(() => {
         const getQuote = () => {

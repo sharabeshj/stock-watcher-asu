@@ -7,6 +7,8 @@ import {
     CartesianGrid,
     Tooltip,
     Line,
+    AreaChart,
+    Area,
   } from "recharts";
 import moment from 'moment';
 import { AxiosRequestConfig } from 'axios';
@@ -15,6 +17,7 @@ import { CandleData } from '../Types/StockTypes';
 import {  WatcherConnector, WatcherReducerProps } from '../Reducers/WatcherReducer';
 import { Api } from '../utils/api';
 import { apiConfig } from '../utils/api.config';
+import { Box, Button, ButtonGroup, Stack } from '@mui/material';
 
 
 class StockWatcherApi extends Api {
@@ -28,15 +31,55 @@ class StockWatcherApi extends Api {
     }
 }
 
+const Config: any = {
+    "1": {
+        fromTime: () => moment().subtract(15, 'minutes').unix(),
+        resolution: "1",
+        tickFormatter: (t:any) => moment.unix(t).format('HH:mm')
+
+    },
+    "5": {
+        fromTime: () => moment().subtract(1, 'hour').unix(),
+        resolution: "5",
+        tickFormatter: (t:any) => moment.unix(t).format('HH:mm')
+    },
+    "15": {
+        fromTime: () => moment().subtract(3, 'hours').unix(),
+        resolution: "15",
+        tickFormatter: (t:any) => moment.unix(t).format('HH:mm')
+    },
+    "30": {
+        fromTime: () => moment().subtract(6, 'hours').unix(),
+        resolution: "30",
+        tickFormatter: (t:any) => moment.unix(t).format('HH:mm')
+    },
+    "60": {
+        fromTime: () => moment().subtract(1, 'day').unix(),
+        resolution: "60",
+        tickFormatter: (t:any) => moment.unix(t).format('HH:mm')
+    },
+    "D": {
+        fromTime: () => moment().subtract(1, 'month').unix(),
+        resolution: "D",
+        tickFormatter: (t:any) => moment.unix(t).format('MM/DD')
+    },
+    "W": {
+        fromTime: () => moment().subtract(3, 'months').unix(),
+        resolution: "W",
+        tickFormatter: (t:any) => moment.unix(t).format('MM/DD')
+    },
+    "M": {
+        fromTime: () => moment().subtract(1, 'year').unix(),
+        resolution: "M",
+        tickFormatter: (t:any) => moment.unix(t).format('MM/DD')
+    }
+}
+
 const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, expanded: string | false }> = ({ symbol, expanded }) => {
     const [candleData, setCandleData] = useState<CandleData[]>([]);
-    const [timer, setTimer] = useState<NodeJS.Timer | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if(timer) clearInterval(timer);
-        }
-    })
+    const [curConfig, setCurConfig] = useState<string>('15');
+    const [timer, setTimer] = useState<number>(0);
+    const [temp, setTemp] = useState<number>(0);
 
     useEffect(() => {
         if(expanded === symbol) {
@@ -46,8 +89,8 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
                     params: {
                         ...apiConfig.params,
                         symbol: symbol,
-                        resolution: 'D',
-                        from: moment().subtract(3, 'months').unix(),
+                        resolution: Config[curConfig].resolution,
+                        from: Config[curConfig].fromTime(),
                         to:moment().unix()
                     }
                 });
@@ -63,26 +106,34 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
                         });
             }
             getCandles();
-            const timer = setInterval(() => {
+            const t = window.setInterval(() => {
                 getCandles();
             }, 5000);
-            setTimer(timer);
+            setTemp(t);
         }
-    }, [symbol, expanded]);
+    }, [symbol, expanded, curConfig]);
 
     useEffect(() => {
-        if(expanded !== symbol) {
-            if(timer) {
-                clearInterval(timer);
-            }
+        if(expanded !== symbol){
+            window.clearInterval(timer);
+            setTemp(0);
         }
-    }, [expanded, symbol, timer]);
+    }, [symbol, expanded, timer]);
+
+    useEffect(() => {
+        setTimer(temp);
+    }, [temp]);
+
+    useEffect(() => {
+        if(temp !== timer)
+            window.clearInterval(timer);
+    }, [temp, timer]);
 
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
           return (
             <div className="custom-tooltip">
-              <p className="label">{`${moment.unix(label).format('MM/DD/YYYY')} : $${payload[0].value}`}</p>
+              <p className="label">{`${Config[curConfig].tickFormatter(label)} : $${payload[0].value}`}</p>
             </div>
           );
         } else {
@@ -91,31 +142,43 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
     }
 
     const chart = (
-        <ResponsiveContainer width = '95%' minWidth={'500px'} height = {500} >
-            <LineChart
-            data={candleData}
-            margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5,
-            }}
-            >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-                dataKey = 't'
-                domain = {['auto', 'auto']}
-                name = 'Time'
-                tickFormatter = {(t) => moment.unix(t).format('MM/DD/YYYY')}
-                type = 'number'
-            />
-            <YAxis name = 'Value' tickFormatter={t => `$${t}`}/>
-            <Tooltip content={<CustomTooltip />}/>
-            <Line type="monotone" dataKey="c" stroke="#8884d8" />
-            </LineChart>
+        <ResponsiveContainer aspect={1.5} width = '99%'  >
+            <AreaChart data={candleData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                    <linearGradient id="colorPv" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4caf50" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#4caf50" stopOpacity={0}/>
+                    </linearGradient>
+                </defs>
+                <XAxis
+                    dataKey = 't'
+                    domain = {['auto', 'auto']}
+                    name = 'Time'
+                    tickFormatter = {(t) => Config[curConfig].tickFormatter(t)}
+                    type = 'number'
+                />
+                <YAxis name = 'Value' tickFormatter={t => `$${t}`}/>
+                <CartesianGrid strokeDasharray="3 3" />
+                <Tooltip content={<CustomTooltip />}/>
+                <Area type="monotone" dataKey="c" stroke="#4caf50" fillOpacity={1} fill="url(#colorPv)" />
+            </AreaChart>
         </ResponsiveContainer>);
 
-    return (chart)
+    return (
+    <Stack spacing={2}>
+        <ButtonGroup variant="outlined" aria-label="outlined button group">
+            <Button onClick={() => setCurConfig("1")}>1</Button>
+            <Button onClick={() => setCurConfig("5")}>5</Button>
+            <Button onClick={() => setCurConfig("15")}>15</Button>
+            <Button onClick={() => setCurConfig("30")}>30</Button>
+            <Button onClick={() => setCurConfig("60")}>60</Button>
+            <Button onClick={() => setCurConfig("D")}>D</Button>
+            <Button onClick={() => setCurConfig("W")}>W</Button>
+            <Button onClick={() => setCurConfig("M")}>M</Button>
+        </ButtonGroup>
+        {chart}
+    </Stack>);
 }
 
 export default WatcherConnector(StockWatcher);
