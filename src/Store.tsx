@@ -7,7 +7,7 @@ import thunk from 'redux-thunk';
 import {StockReducer} from './Reducers/StockReducer';
 
 const mainReducer = combineReducers({
-    stock: StockReducer
+    stock: StockReducer,
 });
 
 export type mainState = ReturnType<typeof mainReducer>;
