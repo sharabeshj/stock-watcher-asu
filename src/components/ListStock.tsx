@@ -69,7 +69,7 @@ const StockListItem: FunctionComponent<{ stock: StockData, expanded: string | fa
                                     {`$${curPrice.c}`}
                                 </Typography>
                                 <Typography sx={{ color: curPrice.d >=0 ? green[700]: red[600] }} gutterBottom variant="subtitle2" component="p">
-                                    {`${curPrice.d >=0 ? '+' : ''}${curPrice.d} (${curPrice.d >=0 ? '+' : ''}${curPrice.dp})`}
+                                    {`${curPrice.d >=0 ? '+' : ''}${curPrice.d} (${curPrice.d >=0 ? '+' : ''}${curPrice.dp}%)`}
                                 </Typography>
                             </Box>
                         ) : null }
@@ -82,7 +82,7 @@ const StockListItem: FunctionComponent<{ stock: StockData, expanded: string | fa
                                     {`$${curPrice.c}`}
                                 </Typography>
                                 <Typography sx={{ color: curPrice.d >=0 ? green[700]: red[600] }} gutterBottom variant="h6" component="p">
-                                    {`${curPrice.d >=0 ? '+' : ''}${curPrice.d} (${curPrice.d >=0 ? '+' : ''}${curPrice.dp})`}
+                                    {`${curPrice.d >=0 ? '+' : ''}${curPrice.d} (${curPrice.d >=0 ? '+' : ''}${curPrice.dp}%)`}
                                 </Typography>
                             </Grid>
                             <Grid item xs={12} sm={6} md={8}>

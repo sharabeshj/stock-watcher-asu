@@ -168,14 +168,14 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
     return (
     <Stack spacing={2}>
         <ButtonGroup variant="outlined" aria-label="outlined button group">
-            <Button onClick={() => setCurConfig("1")}>1</Button>
-            <Button onClick={() => setCurConfig("5")}>5</Button>
-            <Button onClick={() => setCurConfig("15")}>15</Button>
-            <Button onClick={() => setCurConfig("30")}>30</Button>
-            <Button onClick={() => setCurConfig("60")}>60</Button>
-            <Button onClick={() => setCurConfig("D")}>D</Button>
-            <Button onClick={() => setCurConfig("W")}>W</Button>
-            <Button onClick={() => setCurConfig("M")}>M</Button>
+            <Button disabled={curConfig === "1"} onClick={() => setCurConfig("1")}>1</Button>
+            <Button disabled={curConfig === "5"} onClick={() => setCurConfig("5")}>5</Button>
+            <Button disabled={curConfig === "15"} onClick={() => setCurConfig("15")}>15</Button>
+            <Button disabled={curConfig === "30"} onClick={() => setCurConfig("30")}>30</Button>
+            <Button disabled={curConfig === "60"} onClick={() => setCurConfig("60")}>60</Button>
+            <Button disabled={curConfig === "D"} onClick={() => setCurConfig("D")}>D</Button>
+            <Button disabled={curConfig === "W"} onClick={() => setCurConfig("W")}>W</Button>
+            <Button disabled={curConfig === "M"} onClick={() => setCurConfig("M")}>M</Button>
         </ButtonGroup>
         {chart}
     </Stack>);
