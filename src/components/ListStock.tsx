@@ -26,17 +26,31 @@ class ListStockApi extends Api {
 
 const StockListItem: FunctionComponent<{ stock: StockData, expanded: string | false ,handleChange: (s : string) => any}> = ({ stock, expanded, handleChange }) => {
     const [curPrice, setCurPrice] = useState<PriceData>({ c: 0, d: 0, dp: 0});
+    const [socPrice, setSocPrice] = useState<number>(0);
 
-    //websocket
-    // const socket = new WebSocket('wss://ws.finnhub.io?token=c9kcp3qad3i81ufrsg9g');
-    // socket.addEventListener('open', (event) => {
-    //     socket.send(JSON.stringify({'type':'subscribe', 'symbol': stock.symbol}))
-    // });
-    // socket.addEventListener('message', (event) => {
-    //     const data = JSON.parse(event.data);
-    //     if(expanded === stock.symbol)
-    //         setCurPrice(data['data'][0]['p']);
-    // });
+    useEffect(() => {
+        let socket: any = null;
+        if(expanded === stock.symbol){
+            //websocket
+            socket = new WebSocket('wss://ws.finnhub.io?token=c9kcp3qad3i81ufrsg9g');
+            socket.addEventListener('open', (event: any) => {
+                socket.send(JSON.stringify({'type':'subscribe', 'symbol': stock.symbol}))
+            });
+            socket.addEventListener('message', (event: any) => {
+                const data = JSON.parse(event.data);
+                if(expanded === stock.symbol)
+                    setSocPrice(data['data'][data['data'].length - 1]['p']);
+            });
+                }
+                else {
+                    if(socket)
+                        socket.send(JSON.stringify({'type':'unsubscribe','symbol': stock.symbol}))
+                }
+            return () => {
+                if(socket)
+                    socket.close();
+            }
+        }, [expanded,stock.symbol])
 
     useEffect(() => {
         const getQuote = () => {
@@ -79,7 +93,7 @@ const StockListItem: FunctionComponent<{ stock: StockData, expanded: string | fa
                         <Grid container justifyContent={'center'}>
                             <Grid item xs={12} sm={6} md={4}>
                                 <Typography gutterBottom variant="h4" component="p">
-                                    {`$${curPrice.c}`}
+                                    {socPrice == 0 ? `$${curPrice.c}`: `$${socPrice}`}
                                 </Typography>
                                 <Typography sx={{ color: curPrice.d >=0 ? green[700]: red[600] }} gutterBottom variant="h6" component="p">
                                     {`${curPrice.d >=0 ? '+' : ''}${curPrice.d} (${curPrice.d >=0 ? '+' : ''}${curPrice.dp}%)`}

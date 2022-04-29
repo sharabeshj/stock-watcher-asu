@@ -158,7 +158,7 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
                     tickFormatter = {(t) => Config[curConfig].tickFormatter(t)}
                     type = 'number'
                 />
-                <YAxis name = 'Value' tickFormatter={t => `$${t}`}/>
+                <YAxis name = 'Value' tickFormatter={t => `$${t}`} domain={['dataMin - 10', 'dataMax + 10']}/>
                 <CartesianGrid strokeDasharray="3 3" />
                 <Tooltip content={<CustomTooltip />}/>
                 <Area type="monotone" dataKey="c" stroke="#4caf50" fillOpacity={1} fill="url(#colorPv)" />
