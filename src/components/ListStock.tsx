@@ -25,8 +25,8 @@ class ListStockApi extends Api {
 }
 
 const StockListItem: FunctionComponent<{ stock: StockData, expanded: string | false ,handleChange: (s : string) => any}> = ({ stock, expanded, handleChange }) => {
-    const [curPrice, setCurPrice] = useState<PriceData>({ c: 0, d: 0, dp: 0});
-    const [socPrice, setSocPrice] = useState<number>(0);
+    const [curPrice, setCurPrice] = useState<PriceData>({ c: 0, d: 0, dp: 0 });
+     const [socPrice, setSocPrice] = useState<number>(0);
 
     useEffect(() => {
         let socket: any = null;
@@ -93,7 +93,7 @@ const StockListItem: FunctionComponent<{ stock: StockData, expanded: string | fa
                         <Grid container justifyContent={'center'}>
                             <Grid item xs={12} sm={6} md={4}>
                                 <Typography gutterBottom variant="h4" component="p">
-                                    {socPrice == 0 ? `$${curPrice.c}`: `$${socPrice}`}
+                                    {socPrice === 0 ? `$${curPrice.c}`: `$${socPrice}`}
                                 </Typography>
                                 <Typography sx={{ color: curPrice.d >=0 ? green[700]: red[600] }} gutterBottom variant="h6" component="p">
                                     {`${curPrice.d >=0 ? '+' : ''}${curPrice.d} (${curPrice.d >=0 ? '+' : ''}${curPrice.dp}%)`}

@@ -50,7 +50,7 @@ const AddStock: FunctionComponent<StockReducerProps> = ({ add_stock, clear_stock
                 ...apiConfig,
                 params: {
                     ...apiConfig.params,
-                    exchange: "US",
+                    exchange: "US"
                 }
             });
             setDataLoading(false)

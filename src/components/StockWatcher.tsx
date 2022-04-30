@@ -102,6 +102,8 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
                                 data.push({ c: ele, t: t[i]});
                             })
                             setCandleData(data);
+                            } else {
+                                setCurConfig("60");
                             }                    
                         });
             }
