@@ -5,12 +5,17 @@ export type StockStoreType = {
 }
 
 export type WatcherStoreType = {
+    marketClose: boolean
 }
 
 export type PriceData = {
     c: number;
     d: number;
     dp: number;
+    h: number;
+    l: number;
+    o: number;
+    pc: number;
 }
 
 export type CandleData = {

@@ -3,21 +3,20 @@ import {
     ResponsiveContainer,
     XAxis,
     YAxis,
-    LineChart,
     CartesianGrid,
     Tooltip,
-    Line,
     AreaChart,
     Area,
   } from "recharts";
 import moment from 'moment';
 import { AxiosRequestConfig } from 'axios';
+import { Box, Button, ButtonGroup, Stack } from '@mui/material';
 
 import { CandleData } from '../Types/StockTypes';
 import {  WatcherConnector, WatcherReducerProps } from '../Reducers/WatcherReducer';
 import { Api } from '../utils/api';
 import { apiConfig } from '../utils/api.config';
-import { Box, Button, ButtonGroup, Stack } from '@mui/material';
+import { theme } from '../App';
 
 
 class StockWatcherApi extends Api {
@@ -75,45 +74,56 @@ const Config: any = {
     }
 }
 
-const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, expanded: string | false }> = ({ symbol, expanded }) => {
+const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, expanded: string | false }> = ({ symbol, expanded, marketClose, close_market }) => {
     const [candleData, setCandleData] = useState<CandleData[]>([]);
     const [curConfig, setCurConfig] = useState<string>('15');
     const [timer, setTimer] = useState<number>(0);
     const [temp, setTemp] = useState<number>(0);
 
     useEffect(() => {
-        if(expanded === symbol) {
-            const getCandles = () => {
-                const stockWatcherApi = new StockWatcherApi({
-                    ...apiConfig,
-                    params: {
-                        ...apiConfig.params,
-                        symbol: symbol,
-                        resolution: Config[curConfig].resolution,
-                        from: Config[curConfig].fromTime(),
-                        to:moment().unix()
-                    }
-                });
-                stockWatcherApi.getCandles()
-                        .then(d => {
-                            if(d['s'] === 'ok'){
-                                let data: any[] = [], c = d['c'], t = d['t'];
-                            c.forEach((ele: number, i: number)=>{
-                                data.push({ c: ele, t: t[i]});
-                            })
-                            setCandleData(data);
-                            } else {
+        const getCandles = () => {
+            const stockWatcherApi = new StockWatcherApi({
+                ...apiConfig,
+                params: {
+                    ...apiConfig.params,
+                    symbol: symbol,
+                    resolution: Config[curConfig].resolution,
+                    from: Config[curConfig].fromTime(),
+                    to:moment().unix()
+                }
+            });
+            stockWatcherApi.getCandles()
+                    .then(d => {
+                        if(d['s'] === 'ok'){
+                            let data: any[] = [], c = d['c'], t = d['t'];
+                        c.forEach((ele: number, i: number)=>{
+                            data.push({ c: ele, t: t[i]});
+                        })
+                        setCandleData(data);
+                        } else {
+                            if(curConfig in ["1", "5", "15", "30"]) {
                                 setCurConfig("60");
-                            }                    
-                        });
-            }
+                                
+                            } else {
+                                if(curConfig !== "60")
+                                    setCurConfig("D");
+                            }
+                            close_market();
+                        }                    
+                    });
+        }
+        if(expanded === symbol && !marketClose) {
             getCandles();
             const t = window.setInterval(() => {
                 getCandles();
             }, 5000);
             setTemp(t);
         }
-    }, [symbol, expanded, curConfig]);
+        if (expanded === symbol && marketClose) {
+            getCandles();
+            setTemp(0);
+        }
+    }, [symbol, expanded, curConfig, marketClose, close_market]);
 
     useEffect(() => {
         if(expanded !== symbol){
@@ -144,7 +154,7 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
     }
 
     const chart = (
-        <ResponsiveContainer aspect={1.5} width = '99%'  >
+        <ResponsiveContainer aspect={1.5} width = '99%'>
             <AreaChart data={candleData}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
@@ -179,7 +189,9 @@ const StockWatcher: FunctionComponent<WatcherReducerProps & { symbol: string, ex
             <Button disabled={curConfig === "W"} onClick={() => setCurConfig("W")}>W</Button>
             <Button disabled={curConfig === "M"} onClick={() => setCurConfig("M")}>M</Button>
         </ButtonGroup>
-        {chart}
+        <Box sx={{ width: "100%", margin : theme.spacing(4) }}>
+            {chart}
+        </Box>
     </Stack>);
 }
 
